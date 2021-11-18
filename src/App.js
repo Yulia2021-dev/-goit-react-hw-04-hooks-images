@@ -1,25 +1,20 @@
-import logo from "./logo.svg";
 import "./App.css";
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+import { Component } from "react";
 
-export default App;
+export default class App extends Component {
+  state = {
+    picture: null,
+  };
+  componentDidMount() {
+    fetch(
+      "https://pixabay.com/api/?q=cat&page=1&key=your_key&image_type=photo&orientation=horizontal&per_page=12"
+    )
+      .then((res) => res.json())
+      .then((picture) => this.setState(picture));
+  }
+
+  render() {
+    return <div>{this.state.picture && <div>Тут будет картинка</div>}</div>;
+  }
+}
