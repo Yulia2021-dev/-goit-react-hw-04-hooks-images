@@ -1,127 +1,122 @@
-import { Component } from "react";
-import "./App.css";
+import { useState, useEffect } from "react";
 import Loader from "react-loader-spinner";
 import SearchBar from "./components/searchbar/Searchbar";
 import ImageGallery from "./components/imageGallery/ImageGallery.jsx";
 import Button from "./components/button/Button.jsx";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import fetchAPI from "./servises/fetchAPI";
+import "./App.css";
+import fetchAPI from "./fetchAPI";
 
-class App extends Component {
-  state = {
-    searchQuery: "",
-    page: 1,
-    status: "idle",
-    result: [],
-    showModal: false,
-    largeImage: null,
-    error: null,
-  };
+const App = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [result, setResult] = useState([]);
+  const [status, setStatus] = useState("idle");
+  const [page, setPage] = useState(1);
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { searchQuery } = this.state;
+  const onLoadMoreClick = async () => {
+    if (searchQuery !== "") {
+      setResult([]);
+      setStatus("pending");
 
-    if (searchQuery !== prevState.searchQuery) {
-      this.setState({
-        result: [],
-        status: "pending",
+      onFetchImages(
+        page,
+        onErrorNoImages(searchQuery),
+        onErrorNoMoreImages(searchQuery)
+      ).then((data) => {
+        const { hits } = data;
+        if (hits.length === 0) {
+          throw new Error(onErrorNoImages(searchQuery));
+        }
+
+        if (hits.length < 12) {
+          setResult([...result, ...hits]);
+          throw new Error(onErrorNoMoreImages(searchQuery));
+        }
+
+        setStatus("resolved");
+        setResult([...result, ...hits]);
+        setPage(page + 1);
       });
-
-      this.onFetchImages(
-        1,
-        this.onErrorNoImages(searchQuery),
-        this.onErrorNoMoreImages(searchQuery)
-      );
     }
-  }
-
-  onLoadMoreClick = async () => {
-    const { page, searchQuery } = this.state;
-    this.setState({
-      status: "pending",
-    });
-
-    this.onFetchImages(
-      page,
-      this.onErrorNoMoreImages(searchQuery),
-      this.onErrorNoMoreImages(searchQuery)
-    );
   };
 
-  onFetchImages = async (
-    pageQuery,
+  const onFetchImages = async (
+    page,
     emptyResultErrorMessage,
     shortResultErrorMessage
   ) => {
-    const { searchQuery } = this.state;
-
     try {
-      const { hits } = await fetchAPI(searchQuery, pageQuery);
-
-      if (hits.length === 0) {
-        throw new Error(emptyResultErrorMessage);
-      }
-
-      if (hits.length < 12) {
-        this.setState((prevState) => ({
-          result: [...prevState.result, ...hits],
-        }));
-        throw new Error(shortResultErrorMessage);
-      }
-
-      this.setState((prevState) => ({
-        status: "resolved",
-        result: [...prevState.result, ...hits],
-        page: pageQuery + 1,
-      }));
-      window.scrollBy({ top: 1000, behavior: "smooth" });
+      return await fetchAPI(searchQuery, page);
     } catch (error) {
       toast.error(error.message);
-      this.setState({ status: "idle" });
+      setStatus("idle");
     }
   };
 
-  onErrorNoImages(query) {
-    return `No images found for "${query}". Try again.`;
-  }
-  onErrorNoMoreImages(query) {
-    return `No more images found for "${query}".`;
-  }
+  const onErrorNoImages = (query) =>
+    `No images found for "${query}". Try again.`;
+  const onErrorNoMoreImages = (query) => `No more images found for "${query}".`;
 
-  handleFormSubmit = (searchQuery) => {
-    this.setState({ searchQuery });
+  const handleFormSubmit = (query) => {
+    setSearchQuery(query);
+    setResult([]);
   };
 
-  toggleModal = (largeImage) => {
-    this.setState((prevState) => ({
-      largeImage,
-      showModal: !prevState.showModal,
-    }));
+  const update = () => {
+    if (searchQuery !== "") {
+      setResult([]);
+      setStatus("pending");
+
+      onFetchImages(
+        page,
+        onErrorNoImages(searchQuery),
+        onErrorNoMoreImages(searchQuery)
+      ).then((data) => {
+        try {
+          const { hits } = data;
+          if (hits.length === 0) {
+            throw new Error(onErrorNoImages(searchQuery));
+          }
+
+          if (hits.length < 12) {
+            setResult([...result, ...hits]);
+            throw new Error(onErrorNoMoreImages(searchQuery));
+          }
+
+          setStatus("resolved");
+          setResult([...result, ...hits]);
+          setPage(page + 1);
+
+          window.scrollBy({ top: 1000, behavior: "smooth" });
+        } catch (error) {
+          toast.error(error.message);
+          setStatus("idle");
+        }
+      });
+    }
   };
 
-  render() {
-    const { result, status } = this.state;
-    return (
-      <>
-        <SearchBar onSubmit={this.handleFormSubmit} />
-        <ImageGallery result={result} />
-        {status === "resolved" && <Button onClick={this.onLoadMoreClick} />}
-        {status === "pending" && (
-          <Loader
-            type="ThreeDots"
-            color="#995471"
-            width={100}
-            style={{ textAlign: "center" }}
-          />
-        )}
-        {/* {showModal && (
-          <Modal largeImage={largeImage} onClick={this.toggleModal} />
-        )} */}
-        <ToastContainer position="top-right" autoClose={3000} />
-      </>
-    );
-  }
-}
+  useEffect(() => {
+    update();
+  }, [searchQuery]);
+
+  return (
+    <>
+      <SearchBar onSubmit={handleFormSubmit} />
+      <ImageGallery result={result} />
+      {status === "resolved" && <Button onClick={onLoadMoreClick} />}
+      {status === "pending" && (
+        <Loader
+          type="ThreeDots"
+          color="#995471"
+          width={100}
+          style={{ textAlign: "center" }}
+        />
+      )}
+      <ToastContainer position="top-right" autoClose={3000} />
+    </>
+  );
+};
 
 export default App;

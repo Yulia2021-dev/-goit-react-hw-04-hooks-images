@@ -1,36 +1,32 @@
-import React, { Component } from 'react';
+import React, { useState } from "react";
 
-import './imageGalleryItem.css'
+import "./imageGalleryItem.css";
 
-import PropTypes from 'prop-types';
-import Lightbox from 'react-image-lightbox';
-import 'react-image-lightbox/style.css';
+import PropTypes from "prop-types";
+import Lightbox from "react-image-lightbox";
+import "react-image-lightbox/style.css";
 
-class ImageGalleryItem extends Component {
-  state = { isOpen: false };
-  render() {
-    const { id, webformatURL, largeImageURL } = this.props;
-    const { isOpen } = this.state;
-    return (
-      <>
-        <li key={id} className="imageGalleryItem"
-          onClick={() => this.setState({ isOpen: true })}>
-          <img
-            src={webformatURL}
-            alt={`pic-${id}`}
-            className="imageGalleryItem-image"
-          />
-        </li>
-        {isOpen && (
-         <Lightbox
-            mainSrc={largeImageURL}
-            onCloseRequest={() => this.setState({ isOpen: false })}
-          />
-        )}
-      </>
-    );
-  }
-}
+const ImageGalleryItem = ({ id, webformatURL, largeImageURL }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <li key={id} className="imageGalleryItem" onClick={() => setIsOpen(true)}>
+        <img
+          src={webformatURL}
+          alt={`pic-${id}`}
+          className="imageGalleryItem-image"
+        />
+      </li>
+      {isOpen && (
+        <Lightbox
+          mainSrc={largeImageURL}
+          onCloseRequest={() => setIsOpen(false)}
+        />
+      )}
+    </>
+  );
+};
 
 ImageGalleryItem.propTypes = {
   dataOriginal: PropTypes.string,
@@ -39,4 +35,4 @@ ImageGalleryItem.propTypes = {
   description: PropTypes.string,
 };
 
-export { ImageGalleryItem };
+export default ImageGalleryItem;
