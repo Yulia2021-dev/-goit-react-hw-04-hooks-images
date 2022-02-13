@@ -1,5 +1,4 @@
 const API_KEY = "23670564-24f7dd7b8f7c27899fb90c8ea";
-
 const BASE_URL = "https://pixabay.com/api";
 
 const fetchAPI = async (query, page) => {

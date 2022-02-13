@@ -16,15 +16,13 @@ const App = () => {
 
   const onLoadMoreClick = async () => {
     if (searchQuery !== "") {
-      setResult([]);
       setStatus("pending");
 
       onFetchImages(
         page,
         onErrorNoImages(searchQuery),
         onErrorNoMoreImages(searchQuery)
-      ).then((data) => {
-        const { hits } = data;
+      ).then(({ hits }) => {
         if (hits.length === 0) {
           throw new Error(onErrorNoImages(searchQuery));
         }
@@ -36,10 +34,13 @@ const App = () => {
 
         setStatus("resolved");
         setResult([...result, ...hits]);
-        setPage(page + 1);
+        incrementPage();
       });
     }
   };
+
+  const incrementPage = () => setPage(page + 1);
+  const resetPage = () => setPage(1);
 
   const onFetchImages = async (
     page,
@@ -61,6 +62,7 @@ const App = () => {
   const handleFormSubmit = (query) => {
     setSearchQuery(query);
     setResult([]);
+    resetPage();
   };
 
   const update = () => {
@@ -86,7 +88,7 @@ const App = () => {
 
           setStatus("resolved");
           setResult([...result, ...hits]);
-          setPage(page + 1);
+          incrementPage();
 
           window.scrollBy({ top: 1000, behavior: "smooth" });
         } catch (error) {
@@ -97,9 +99,7 @@ const App = () => {
     }
   };
 
-  useEffect(() => {
-    update();
-  }, [searchQuery]);
+  useEffect(() => update(), [searchQuery]);
 
   return (
     <>

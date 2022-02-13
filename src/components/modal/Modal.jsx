@@ -1,31 +1,28 @@
-import React, { Component } from 'react';
-import { createPortal } from 'react-dom';
-import './modal.css';
+import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
-const modalRoot = document.getElementById('modal-root');
+import "./modal.css";
 
-export default class Modal extends Component {
-  componentDidMount() {
-    window.addEventListener('keydown', this.handleKeyDown);
-  }
+const modalRoot = document.getElementById("modal-root");
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeyDown);
-  }
+const Modal = ({ modalSource, onClick }) => {
+  useEffect(() => {
+    const handleKeyDown = (e) => e.code === "Escape" && onClick();
+    window.addEventListener("keydown", handleKeyDown);
 
-  handleKeyDown = e => e.code === 'Escape' && this.props.onClick();
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
-  handleBackdropClick = e => e.currentTarget === e.target && this.props.onClick();
+  const handleBackdropClick = (e) => e.currentTarget === e.target && onClick();
 
-  render() {
-    const { modalSource } = this.props;
-    return createPortal(
-      <div className="" onClick={this.handleBackdropClick}>
-        <div className="">
-          <img src={modalSource} alt="" />
-        </div>
-      </div>,
-      modalRoot,
-    );
-  }
-}
+  return createPortal(
+    <div className="" onClick={handleBackdropClick}>
+      <div className="">
+        <img src={modalSource} alt="" />
+      </div>
+    </div>,
+    modalRoot
+  );
+};
+
+export default Modal;
